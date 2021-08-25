@@ -13,7 +13,9 @@ libraries = (
 root_dir = pathlib.Path().cwd()
 workdir = root_dir.joinpath("ngx")
 pathlib.Path(workdir).mkdir(exist_ok=True, parents=True)
-print(workdir)
+
+
+LIB_DEPENDENCIES = "apt install libpcre3 libpcre3-dev libssl-dev zlib1g-dev"
 
 
 async def run(query):
@@ -27,17 +29,9 @@ async def run(query):
         print("stderr:", stderr.decode())
 
 
-async def apt_install():
-    await run(f"apt install libpcre3 libpcre3-dev libssl-dev zlib1g-dev")
-
-
-async def git_clone(uri):
-    await run(f"cd {workdir} && git clone {uri}")
-
-
 async def main():
-    tasks = [git_clone(uri) for uri in libraries]
-    tasks.append(apt_install())
+    tasks = [run(f"cd {workdir} && git clone {uri}") for uri in libraries]
+    tasks.append(run(LIB_DEPENDENCIES))
     await asyncio.gather(*tasks)
 
 
