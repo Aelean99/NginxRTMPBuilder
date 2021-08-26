@@ -11,9 +11,8 @@ libraries = (
 )
 
 root_dir = pathlib.Path().cwd()
-workdir = root_dir.joinpath("ngx")
-pathlib.Path(workdir).mkdir(exist_ok=True, parents=True)
-
+ngx_dir = root_dir.joinpath("ngx")
+pathlib.Path(ngx_dir).mkdir(exist_ok=True, parents=True)
 
 LIB_DEPENDENCIES = "apt install libpcre3 libpcre3-dev libssl-dev zlib1g-dev"
 
@@ -29,10 +28,23 @@ async def run(query):
         print("stderr:", stderr.decode())
 
 
+CONFIGURE_OPTIONS = "--with-http_ssl_module " \
+                    "--with-http_secure_link_module " \
+                    "--add-module=../ngx_devel_kit " \
+                    "--add-module=../nginx-rtmp-module " \
+                    "--add-module=../set-misc-nginx-module " \
+                    "--add-module=../nginx-http-concat " \
+                    "--add-module=../ngx_auto_lib"
+
+
 async def main():
-    tasks = [run(f"cd {workdir} && git clone {uri}") for uri in libraries]
+    tasks = [run(f"cd {ngx_dir} && git clone {uri}") for uri in libraries]
     tasks.append(run(LIB_DEPENDENCIES))
+
     await asyncio.gather(*tasks)
+
+    nginx_dir = ngx_dir.joinpath("nginx")
+    await run(f"cd {nginx_dir} && ./auto/configure {CONFIGURE_OPTIONS} && make -j 4")
 
 
 if __name__ == '__main__':
