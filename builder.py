@@ -39,6 +39,18 @@ def main():
     nginx_dir = root_dir.joinpath("nginx")
     run("cd {0} && ./auto/configure {1} && make -j 4".format(nginx_dir, CONFIGURE_OPTIONS))
 
+    new_nginx_dir = pathlib.Path("/usr/local/nginx/sbin/")
+    new_nginx_dir.mkdir(exist_ok=True, parents=True)
+
+    logs_dir = pathlib.Path("/usr/local/nginx/logs")
+    logs_dir.mkdir(exist_ok=True, parents=True)
+
+    run(f"cd {logs_dir} && touch error.log")
+    run(f"cp {nginx_dir}/objs/nginx {new_nginx_dir}")
+    run(f"cp -r {nginx_dir}/conf {new_nginx_dir.parent}")
+
+    run(f"{new_nginx_dir}/nginx -t")
+
 
 if __name__ == '__main__':
     main()
